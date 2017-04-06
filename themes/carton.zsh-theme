@@ -1,31 +1,22 @@
 # https://github.com/blinks zsh theme
 
-# # Outputs current branch info in prompt format
-# function git_prompt_info() {
-#   local ref
-#   if [[ "$(command git config --get oh-my-zsh.hide-status 2>/dev/null)" != "1" ]]; then
-#     ref=$(command git symbolic-ref HEAD 2> /dev/null) || \
-#     ref=$(command git rev-parse --short HEAD 2> /dev/null) || return 0
-#     echo "$ZSH_THEME_GIT_PROMPT_PREFIX${ref#refs/heads/}$(parse_git_dirty)$ZSH_THEME_GIT_PROMPT_SUFFIX"
-#   fi
-# }
-
 # Checks if working tree is dirty
 function parse_git_dirty() {
+  local GIT_STATUS_TIMEOUT=1s
   local STATUS=''
   local FLAGS
   FLAGS=('--porcelain')
   if [[ "$PWD" == *"AMSS"* ]]; then
     echo "$ZSH_THEME_GIT_PROMPT_UNKNOWN"
   else
-    if [[ "$(command git config --get oh-my-zsh.hide-dirty)" != "1" ]]; then
+    if [[ "$ZSH_THEME_GIT_DISABLE_DIRTY_CHECK" != "true" ]] && [[ "$(command git config --get oh-my-zsh.hide-dirty)" != "1" ]]; then
       if [[ $POST_1_7_2_GIT -gt 0 ]]; then
       FLAGS+='--ignore-submodules=dirty'
       fi
       if [[ "$DISABLE_UNTRACKED_FILES_DIRTY" == "true" ]]; then
       FLAGS+='--untracked-files=no'
       fi
-      STATUS=$(command git status ${FLAGS} 2> /dev/null | tail -n1)
+      STATUS=$(command timeout ${GIT_STATUS_TIMEOUT} git status ${FLAGS} 2> /dev/null | tail -n1)
     fi
     if [[ -n $STATUS ]]; then
       echo "$ZSH_THEME_GIT_PROMPT_DIRTY"
@@ -59,6 +50,7 @@ ZSH_THEME_GIT_PROMPT_SUFFIX="%{%f%k%b%K{${bkg}}%B%F{green}%}]"
 ZSH_THEME_GIT_PROMPT_DIRTY=" %{%F{red}%}*%{%f%k%b%}"
 ZSH_THEME_GIT_PROMPT_UNKNOWN=" %{%F{red}%}?%{%f%k%b%}"
 ZSH_THEME_GIT_PROMPT_CLEAN=""
+ZSH_THEME_GIT_DISABLE_DIRTY_CHECK="true"
 
 PROMPT='%{%f%k%b%}
 %{%K{${bkg}}%B%F{green}%}%n%{%B%F{blue}%}@%{%B%F{cyan}%}%m%{%B%F{green}%} %{%b%F{yellow}%K{${bkg}}%}%~%{%B%F{green}%}$(git_prompt_info)%E%{%f%k%b%}
